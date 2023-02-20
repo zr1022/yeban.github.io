@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>夜半的ChatGPT</title>
+</head>
+<body>
+    
+
+
+
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<div id="app" style="display: flex;flex-flow: column;margin: 20 ">
+    <scroll-view scroll-with-animation scroll-y="true" style="width: 100%;">
+      <view id="okk" scroll-with-animation>
+        <!-- 消息 -->
+        <view v-for="(x,i) in msgList" :key="i">
+          <view v-if="x.my" style="display: flex;
+              flex-direction: column;
+              align-items: flex-end;">
+            <view style="width: 400rpx;">
+              <view style="border-radius: 35rpx;">
+                <text style="word-break: break-all;">{{x.msg}}</text>
+              </view>
+            </view>
+          </view>
+          <view v-if="!x.my" style="display: flex;
+              flex-direction: row;
+              align-items: flex-start;">
+            <view style="width: 500rpx;">
+              <view style="border-radius: 35rpx;background-color: #f9f9f9;">
+                <text style="word-break: break-all;">{{x.msg}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view style="height: 130rpx;"></view>
+      </view>
+    </scroll-view>
+    <view style="position: fixed;bottom:0px;width: 100%;display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;">
+      <view style="font-size: 55rpx;display: flex;
+          flex-direction: row;
+          justify-content: space-around;
+          align-items: center;width: 75%;
+          margin: 20;">
+        <textarea v-model="msg" type="text" style="width: 75%;
+            border-radius: 50px;
+            padding-left: 20px;
+            margin-left: 10px;background-color: #f0f0f0;"
+            @keydown.enter.prevent="msg.endsWith('\n') ? sendMsg() : msg += '\n'"
+            placeholder-class="my-neirong-sm" placeholder="用一句话说说有什么问题"></textarea>
+        <button @click="sendMsg" :disabled="msgLoad" style="height: 45px;
+            width: 20%;;
+            color: #030303;    border-radius: 2500px;">{{sentext}}</button>
+      </view>
+    </view>
+  </div>
+
+  <script>
+    const { createApp } = Vue
+    createApp({
+      data() {
+        return {
+          api: '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',
+          msgLoad: false,
+          anData: {},
+          sentext: '发送',
+          animationData: {},
+          showTow: false,
+          msgList: [{
+            my: false,
+            msg: "你好，有什么问题可以帮助你?"
+          }],
+                msgContent: "",
+                msg: ""
+            }
+        },
+        methods: {
+            sendMsg() {
+
+               
+                if (this.msg == "") {
+                    return 0;
+                }
+                this.sentext = '发送中'
+                this.msgList.push({
+                    "msg": this.msg,
+                    "my": true
+                })
+                console.log(this.msg);
+                this.msgContent += ('YOU:' + this.msg + "\n")
+                this.msgLoad = true
+                // 清除消息
+                this.msg = ""
+                axios.post('https://api.openai.com/v1/completions', {
+                    prompt: this.msgContent, max_tokens: 2048, model: "text-davinci-003"
+                }, {
+                    headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + this.api }
+                }).then(res => {
+                    console.log(res);
+                    let text = res.data.choices[0].text.replace("openai:", "").replace("openai：", "").replace(/^\n|\n$/g, "")
+                    console.log(text);
+                    this.msgList.push({
+                        "msg": text,
+                        "my": false
+                    })
+                    this.msgContent += (text + "\n")
+                    this.msgLoad = false
+                    this.sentext = '发送'
+                })
+
+            },
+
+
+        }
+    }).mount('#app')
+</script>
+</body>
+</html>
